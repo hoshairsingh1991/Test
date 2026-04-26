@@ -56,7 +56,7 @@ export default function Dashboard() {
   const hasNoData =
     metrics &&
     metrics.tradeCount === 0 &&
-    metrics.previous.tradeCount === 0 &&
+    (metrics.previous?.tradeCount ?? 0) === 0 &&
     (!calendar || calendar.length === 0);
 
   if (hasNoData) {
@@ -110,13 +110,13 @@ export default function Dashboard() {
             value={metrics ? formatCurrency(metrics.totalPnl) : "—"}
             valueClassName={metrics ? cnPnl(metrics.totalPnl) : ""}
             current={metrics?.totalPnl ?? 0}
-            previous={metrics?.previous.totalPnl ?? 0}
+            previous={metrics?.previous?.totalPnl ?? 0}
           />
           <PerformanceCard
             label="Win Rate"
             value={metrics ? formatPercent(metrics.winRate) : "—"}
             current={metrics?.winRate ?? 0}
-            previous={metrics?.previous.winRate ?? 0}
+            previous={metrics?.previous?.winRate ?? 0}
             formatDelta={(d) =>
               `${d >= 0 ? "+" : ""}${(d * 100).toFixed(1)}pp`
             }
@@ -125,14 +125,14 @@ export default function Dashboard() {
             label="Expectancy"
             value={metrics ? `${metrics.expectancyR.toFixed(2)} R` : "—"}
             current={metrics?.expectancyR ?? 0}
-            previous={metrics?.previous.expectancyR ?? 0}
+            previous={metrics?.previous?.expectancyR ?? 0}
             formatDelta={(d) => `${d >= 0 ? "+" : ""}${d.toFixed(2)} R`}
           />
           <PerformanceCard
             label="Avg R"
             value={metrics ? `${metrics.avgR.toFixed(2)} R` : "—"}
             current={metrics?.avgR ?? 0}
-            previous={metrics?.previous.avgR ?? 0}
+            previous={metrics?.previous?.avgR ?? 0}
             formatDelta={(d) => `${d >= 0 ? "+" : ""}${d.toFixed(2)} R`}
           />
         </div>
