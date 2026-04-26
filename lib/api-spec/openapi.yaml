@@ -3,20 +3,28 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: TradeTrack Pro API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: trades
+    description: Trade journal operations
+  - name: metrics
+    description: Performance metrics
+  - name: analysis
+    description: Execution analysis
+  - name: review
+    description: Weekly review
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,190 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /trades:
+    get:
+      operationId: listTrades
+      tags: [trades]
+      summary: List trades for the current user with optional filters
+      parameters:
+        - in: query
+          name: setup
+          schema:
+            $ref: "#/components/schemas/SetupType"
+        - in: query
+          name: session
+          schema:
+            $ref: "#/components/schemas/Session"
+        - in: query
+          name: execution
+          schema:
+            $ref: "#/components/schemas/ExecutionQuality"
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [date, pnl]
+        - in: query
+          name: sortDir
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: List of trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trade"
+    post:
+      operationId: createTrade
+      tags: [trades]
+      summary: Create a new trade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeInput"
+      responses:
+        "200":
+          description: Created trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+
+  /trades/{id}:
+    get:
+      operationId: getTrade
+      tags: [trades]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+    delete:
+      operationId: deleteTrade
+      tags: [trades]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  /metrics/summary:
+    get:
+      operationId: getMetricsSummary
+      tags: [metrics]
+      summary: Aggregate metrics across all trades
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsSummary"
+
+  /metrics/equity-curve:
+    get:
+      operationId: getEquityCurve
+      tags: [metrics]
+      summary: Cumulative PnL over time
+      responses:
+        "200":
+          description: Curve points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EquityPoint"
+
+  /metrics/win-loss:
+    get:
+      operationId: getWinLoss
+      tags: [metrics]
+      responses:
+        "200":
+          description: Win/Loss counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WinLoss"
+
+  /metrics/by-setup:
+    get:
+      operationId: getPerformanceBySetup
+      tags: [metrics]
+      responses:
+        "200":
+          description: Performance grouped by setup
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupedPerformance"
+
+  /metrics/by-session:
+    get:
+      operationId: getPerformanceBySession
+      tags: [metrics]
+      responses:
+        "200":
+          description: Performance grouped by session
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupedPerformance"
+
+  /analysis/execution:
+    get:
+      operationId: getExecutionAnalysis
+      tags: [analysis]
+      summary: Compare EMA aligned vs not, A+ vs FOMO
+      responses:
+        "200":
+          description: Comparison metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionAnalysis"
+
+  /review/weekly:
+    get:
+      operationId: getWeeklyReview
+      tags: [review]
+      summary: Weekly review insights
+      responses:
+        "200":
+          description: Weekly review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyReview"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +223,253 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    DeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    Direction:
+      type: string
+      enum: [Long, Short]
+
+    SetupType:
+      type: string
+      enum: [Pullback, Breakout, Reversal]
+
+    Session:
+      type: string
+      enum: [London, NY, Asia]
+
+    ExecutionQuality:
+      type: string
+      enum: ["A+", "B", "FOMO"]
+
+    Trade:
+      type: object
+      properties:
+        id:
+          type: string
+        symbol:
+          type: string
+        entryPrice:
+          type: number
+        exitPrice:
+          type: number
+        size:
+          type: number
+        direction:
+          $ref: "#/components/schemas/Direction"
+        tradedAt:
+          type: string
+          format: date-time
+        setupType:
+          $ref: "#/components/schemas/SetupType"
+        session:
+          $ref: "#/components/schemas/Session"
+        emaAlignment:
+          type: boolean
+        executionQuality:
+          $ref: "#/components/schemas/ExecutionQuality"
+        notes:
+          type: string
+          nullable: true
+        screenshotUrl:
+          type: string
+          nullable: true
+        pnl:
+          type: number
+        rr:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - symbol
+        - entryPrice
+        - exitPrice
+        - size
+        - direction
+        - tradedAt
+        - setupType
+        - session
+        - emaAlignment
+        - executionQuality
+        - pnl
+        - rr
+        - createdAt
+
+    TradeInput:
+      type: object
+      properties:
+        symbol:
+          type: string
+          minLength: 1
+        entryPrice:
+          type: number
+          exclusiveMinimum: 0
+        exitPrice:
+          type: number
+          exclusiveMinimum: 0
+        size:
+          type: number
+          exclusiveMinimum: 0
+        direction:
+          $ref: "#/components/schemas/Direction"
+        tradedAt:
+          type: string
+          format: date-time
+        setupType:
+          $ref: "#/components/schemas/SetupType"
+        session:
+          $ref: "#/components/schemas/Session"
+        emaAlignment:
+          type: boolean
+        executionQuality:
+          $ref: "#/components/schemas/ExecutionQuality"
+        notes:
+          type: string
+          nullable: true
+        screenshotUrl:
+          type: string
+          nullable: true
+      required:
+        - symbol
+        - entryPrice
+        - exitPrice
+        - size
+        - direction
+        - tradedAt
+        - setupType
+        - session
+        - emaAlignment
+        - executionQuality
+
+    MetricsSummary:
+      type: object
+      properties:
+        totalPnl:
+          type: number
+        tradeCount:
+          type: integer
+        winRate:
+          type: number
+        avgWin:
+          type: number
+        avgLoss:
+          type: number
+        expectancyR:
+          type: number
+        wins:
+          type: integer
+        losses:
+          type: integer
+        breakeven:
+          type: integer
+      required:
+        - totalPnl
+        - tradeCount
+        - winRate
+        - avgWin
+        - avgLoss
+        - expectancyR
+        - wins
+        - losses
+        - breakeven
+
+    EquityPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        cumulativePnl:
+          type: number
+      required: [date, cumulativePnl]
+
+    WinLoss:
+      type: object
+      properties:
+        wins:
+          type: integer
+        losses:
+          type: integer
+        breakeven:
+          type: integer
+      required: [wins, losses, breakeven]
+
+    GroupedPerformance:
+      type: object
+      properties:
+        label:
+          type: string
+        tradeCount:
+          type: integer
+        winRate:
+          type: number
+        totalPnl:
+          type: number
+        avgPnl:
+          type: number
+      required: [label, tradeCount, winRate, totalPnl, avgPnl]
+
+    ExecutionComparison:
+      type: object
+      properties:
+        groupA:
+          type: string
+        groupB:
+          type: string
+        winRateA:
+          type: number
+        winRateB:
+          type: number
+        pnlA:
+          type: number
+        pnlB:
+          type: number
+        countA:
+          type: integer
+        countB:
+          type: integer
+      required: [groupA, groupB, winRateA, winRateB, pnlA, pnlB, countA, countB]
+
+    ExecutionAnalysis:
+      type: object
+      properties:
+        emaComparison:
+          $ref: "#/components/schemas/ExecutionComparison"
+        qualityComparison:
+          $ref: "#/components/schemas/ExecutionComparison"
+      required: [emaComparison, qualityComparison]
+
+    WeeklyReview:
+      type: object
+      properties:
+        weekStart:
+          type: string
+          format: date-time
+        weekEnd:
+          type: string
+          format: date-time
+        tradeCount:
+          type: integer
+        totalPnl:
+          type: number
+        bestSetup:
+          type: string
+          nullable: true
+        worstSetup:
+          type: string
+          nullable: true
+        bestSession:
+          type: string
+          nullable: true
+        mostCommonMistake:
+          type: string
+          nullable: true
+      required: [weekStart, weekEnd, tradeCount, totalPnl]
