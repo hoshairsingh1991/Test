@@ -5,15 +5,10 @@
  * TradeTrack Pro API
  * OpenAPI spec version: 0.1.0
  */
+import type { MetricStats } from "./metricStats";
 
-export interface MetricsSummary {
-  totalPnl: number;
-  tradeCount: number;
-  winRate: number;
-  avgWin: number;
-  avgLoss: number;
-  expectancyR: number;
-  wins: number;
-  losses: number;
-  breakeven: number;
-}
+export type MetricsSummary = MetricStats & {
+  previous: MetricStats;
+  periodStart: Date;
+  periodEnd: Date;
+};

@@ -8,7 +8,7 @@ const router: IRouter = Router();
 function startOfWeek(d: Date): Date {
   const date = new Date(d);
   const day = date.getUTCDay();
-  const diff = (day === 0 ? -6 : 1 - day);
+  const diff = day === 0 ? -6 : 1 - day;
   date.setUTCDate(date.getUTCDate() + diff);
   date.setUTCHours(0, 0, 0, 0);
   return date;
@@ -45,22 +45,50 @@ function bestWorstBy(trades: Trade[], key: (t: Trade) => string) {
   return { best, worst };
 }
 
-function mostCommonMistake(trades: Trade[]): string | null {
+function bestWorstHabit(trades: Trade[]): { worstHabit: string | null; mostCommonMistake: string | null } {
   const losers = trades.filter((t) => t.pnl < 0);
-  if (losers.length === 0) return null;
+  if (losers.length === 0) return { worstHabit: null, mostCommonMistake: null };
 
-  const fomo = losers.filter((t) => t.executionQuality === "FOMO").length;
-  const noEma = losers.filter((t) => !t.emaAlignment).length;
-  const bGrade = losers.filter((t) => t.executionQuality === "B").length;
-
-  const candidates: Array<{ label: string; count: number }> = [
-    { label: "FOMO entries", count: fomo },
-    { label: "Trading against EMA alignment", count: noEma },
-    { label: "B-grade execution", count: bGrade },
+  const habits = [
+    {
+      label: "FOMO entries",
+      count: losers.filter((t) => t.executionQuality === "FOMO").length,
+    },
+    {
+      label: "Trading against EMA",
+      count: losers.filter((t) => !t.emaAlignment).length,
+    },
+    {
+      label: "B-grade execution",
+      count: losers.filter((t) => t.executionQuality === "B").length,
+    },
   ];
-  candidates.sort((a, b) => b.count - a.count);
-  if (candidates[0].count === 0) return null;
-  return candidates[0].label;
+  habits.sort((a, b) => b.count - a.count);
+  if (habits[0].count === 0) return { worstHabit: null, mostCommonMistake: null };
+  return { worstHabit: habits[0].label, mostCommonMistake: habits[0].label };
+}
+
+function dayName(d: Date): string {
+  return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][d.getUTCDay()];
+}
+
+function bestWorstDay(trades: Trade[]) {
+  return bestWorstBy(trades, (t) => dayName(t.tradedAt));
+}
+
+function buildRecommendation(
+  bestSetup: string | null,
+  worstSetup: string | null,
+  bestSession: string | null,
+  worstHabit: string | null,
+): string | null {
+  const parts: string[] = [];
+  if (bestSetup) parts.push(`Lean into ${bestSetup} setups`);
+  if (bestSession) parts.push(`during the ${bestSession} session`);
+  if (worstSetup && worstSetup !== bestSetup) parts.push(`Cut size on ${worstSetup} until you fix it`);
+  if (worstHabit) parts.push(`Eliminate ${worstHabit.toLowerCase()}`);
+  if (parts.length === 0) return null;
+  return parts.join(". ") + ".";
 }
 
 router.get("/review/weekly", requireAuth, async (req, res) => {
@@ -82,6 +110,14 @@ router.get("/review/weekly", requireAuth, async (req, res) => {
   const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
   const setupRes = bestWorstBy(trades, (t) => t.setupType);
   const sessionRes = bestWorstBy(trades, (t) => t.session);
+  const dayRes = bestWorstDay(trades);
+  const habit = bestWorstHabit(trades);
+  const recommendation = buildRecommendation(
+    setupRes.best,
+    setupRes.worst,
+    sessionRes.best,
+    habit.worstHabit,
+  );
 
   res.json({
     weekStart: weekStart.toISOString(),
@@ -91,7 +127,12 @@ router.get("/review/weekly", requireAuth, async (req, res) => {
     bestSetup: setupRes.best,
     worstSetup: setupRes.worst,
     bestSession: sessionRes.best,
-    mostCommonMistake: mostCommonMistake(trades),
+    worstSession: sessionRes.worst,
+    bestDay: dayRes.best,
+    worstDay: dayRes.worst,
+    worstHabit: habit.worstHabit,
+    mostCommonMistake: habit.mostCommonMistake,
+    recommendation,
   });
 });
 

@@ -43,12 +43,15 @@ A focused trading journal web app. Users sign in, log every trade with rich meta
 
 - `GET/POST /api/trades`, `GET/DELETE /api/trades/:id`
 - `POST /api/trades/import` — bulk import (CSV); skips duplicates, sets `source = "csv"`
-- `GET /api/metrics/summary` — total PnL, win rate, avg win/loss, expectancy
-- `GET /api/metrics/equity-curve` — cumulative PnL over time
+- All metrics endpoints accept `?timeframe=day|week|month|year|all&date=ISO`
+- `GET /api/metrics/summary` — current period stats + previous-period comparison
+- `GET /api/metrics/equity-curve` — cumulative PnL within period
 - `GET /api/metrics/win-loss` — wins/losses/breakeven counts
 - `GET /api/metrics/by-setup`, `/api/metrics/by-session` — grouped performance
-- `GET /api/analysis/execution` — EMA-on vs off, A+ vs FOMO comparisons
-- `GET /api/review/weekly` — weekly best/worst setup/session, common mistake
+- `GET /api/metrics/calendar?date=ISO` — daily PnL aggregates for the month
+- `GET /api/metrics/day?date=YYYY-MM-DD` — single-day detail (best/worst trade, mistakes)
+- `GET /api/analysis/execution` — EMA-on vs off, A+ vs FOMO comparisons (timeframe-aware)
+- `GET /api/review/weekly` — best/worst setup/session/day, worst habit, recommendation
 
 ## Key Commands
 

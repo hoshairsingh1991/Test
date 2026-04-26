@@ -156,33 +156,85 @@ export const DeleteTradeResponse = zod.object({
 });
 
 /**
- * @summary Aggregate metrics across all trades
+ * @summary Aggregate metrics with previous-period comparison
  */
-export const GetMetricsSummaryResponse = zod.object({
-  totalPnl: zod.number(),
-  tradeCount: zod.number(),
-  winRate: zod.number(),
-  avgWin: zod.number(),
-  avgLoss: zod.number(),
-  expectancyR: zod.number(),
-  wins: zod.number(),
-  losses: zod.number(),
-  breakeven: zod.number(),
+export const GetMetricsSummaryQueryParams = zod.object({
+  timeframe: zod.enum(["day", "week", "month", "year", "all"]).optional(),
+  date: zod.coerce
+    .string()
+    .optional()
+    .describe("Anchor date (ISO). Defaults to today."),
 });
+
+export const GetMetricsSummaryResponse = zod
+  .object({
+    totalPnl: zod.number(),
+    tradeCount: zod.number(),
+    winRate: zod.number(),
+    avgWin: zod.number(),
+    avgLoss: zod.number(),
+    expectancyR: zod.number(),
+    avgR: zod.number(),
+    wins: zod.number(),
+    losses: zod.number(),
+    breakeven: zod.number(),
+  })
+  .and(
+    zod.object({
+      previous: zod.object({
+        totalPnl: zod.number(),
+        tradeCount: zod.number(),
+        winRate: zod.number(),
+        avgWin: zod.number(),
+        avgLoss: zod.number(),
+        expectancyR: zod.number(),
+        avgR: zod.number(),
+        wins: zod.number(),
+        losses: zod.number(),
+        breakeven: zod.number(),
+      }),
+      periodStart: zod.coerce.date(),
+      periodEnd: zod.coerce.date(),
+    }),
+  );
 
 /**
  * @summary Cumulative PnL over time
  */
+export const GetEquityCurveQueryParams = zod.object({
+  timeframe: zod.enum(["day", "week", "month", "year", "all"]).optional(),
+  date: zod.coerce
+    .string()
+    .optional()
+    .describe("Anchor date (ISO). Defaults to today."),
+});
+
 export const GetEquityCurveResponseItem = zod.object({
   date: zod.coerce.date(),
   cumulativePnl: zod.number(),
 });
 export const GetEquityCurveResponse = zod.array(GetEquityCurveResponseItem);
 
+export const GetWinLossQueryParams = zod.object({
+  timeframe: zod.enum(["day", "week", "month", "year", "all"]).optional(),
+  date: zod.coerce
+    .string()
+    .optional()
+    .describe("Anchor date (ISO). Defaults to today."),
+});
+
 export const GetWinLossResponse = zod.object({
   wins: zod.number(),
   losses: zod.number(),
   breakeven: zod.number(),
+});
+
+export const GetPerformanceBySetupQueryParams = zod.object({
+  timeframe: zod.enum(["day", "week", "month", "year", "all"]).optional(),
+  date: zod.coerce
+    .string()
+    .optional()
+    .describe("Anchor date (ISO). Defaults to today."),
 });
 
 export const GetPerformanceBySetupResponseItem = zod.object({
@@ -196,6 +248,14 @@ export const GetPerformanceBySetupResponse = zod.array(
   GetPerformanceBySetupResponseItem,
 );
 
+export const GetPerformanceBySessionQueryParams = zod.object({
+  timeframe: zod.enum(["day", "week", "month", "year", "all"]).optional(),
+  date: zod.coerce
+    .string()
+    .optional()
+    .describe("Anchor date (ISO). Defaults to today."),
+});
+
 export const GetPerformanceBySessionResponseItem = zod.object({
   label: zod.string(),
   tradeCount: zod.number(),
@@ -208,8 +268,67 @@ export const GetPerformanceBySessionResponse = zod.array(
 );
 
 /**
+ * @summary Daily PnL aggregates for a calendar month
+ */
+export const GetCalendarQueryParams = zod.object({
+  date: zod.coerce
+    .string()
+    .optional()
+    .describe("Any date inside the month to render (ISO YYYY-MM-DD)."),
+});
+
+export const GetCalendarResponseItem = zod.object({
+  date: zod.string(),
+  pnl: zod.number(),
+  tradeCount: zod.number(),
+  winRate: zod.number(),
+});
+export const GetCalendarResponse = zod.array(GetCalendarResponseItem);
+
+/**
+ * @summary Detailed stats for a single trading day
+ */
+export const GetDayDetailQueryParams = zod.object({
+  date: zod.coerce.string(),
+});
+
+export const GetDayDetailResponse = zod.object({
+  date: zod.string(),
+  pnl: zod.number(),
+  tradeCount: zod.number(),
+  winRate: zod.number(),
+  bestTrade: zod
+    .object({
+      symbol: zod.string(),
+      direction: zod.string(),
+      pnl: zod.number(),
+      rr: zod.number(),
+      executionQuality: zod.string(),
+    })
+    .nullish(),
+  worstTrade: zod
+    .object({
+      symbol: zod.string(),
+      direction: zod.string(),
+      pnl: zod.number(),
+      rr: zod.number(),
+      executionQuality: zod.string(),
+    })
+    .nullish(),
+  mistakes: zod.array(zod.string()),
+});
+
+/**
  * @summary Compare EMA aligned vs not, A+ vs FOMO
  */
+export const GetExecutionAnalysisQueryParams = zod.object({
+  timeframe: zod.enum(["day", "week", "month", "year", "all"]).optional(),
+  date: zod.coerce
+    .string()
+    .optional()
+    .describe("Anchor date (ISO). Defaults to today."),
+});
+
 export const GetExecutionAnalysisResponse = zod.object({
   emaComparison: zod.object({
     groupA: zod.string(),
@@ -244,5 +363,10 @@ export const GetWeeklyReviewResponse = zod.object({
   bestSetup: zod.string().nullish(),
   worstSetup: zod.string().nullish(),
   bestSession: zod.string().nullish(),
+  worstSession: zod.string().nullish(),
+  bestDay: zod.string().nullish(),
+  worstDay: zod.string().nullish(),
+  worstHabit: zod.string().nullish(),
   mostCommonMistake: zod.string().nullish(),
+  recommendation: zod.string().nullish(),
 });

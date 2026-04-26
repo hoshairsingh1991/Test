@@ -14,5 +14,10 @@ export interface WeeklyReview {
   bestSetup?: string | null;
   worstSetup?: string | null;
   bestSession?: string | null;
+  worstSession?: string | null;
+  bestDay?: string | null;
+  worstDay?: string | null;
+  worstHabit?: string | null;
   mostCommonMistake?: string | null;
+  recommendation?: string | null;
 }

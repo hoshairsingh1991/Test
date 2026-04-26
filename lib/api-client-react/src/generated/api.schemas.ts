@@ -106,16 +106,48 @@ export interface ImportTradesResult {
   skippedDuplicates: number;
 }
 
-export interface MetricsSummary {
+export interface MetricStats {
   totalPnl: number;
   tradeCount: number;
   winRate: number;
   avgWin: number;
   avgLoss: number;
   expectancyR: number;
+  avgR: number;
   wins: number;
   losses: number;
   breakeven: number;
+}
+
+export type MetricsSummary = MetricStats & {
+  previous: MetricStats;
+  periodStart: string;
+  periodEnd: string;
+};
+
+export interface CalendarDay {
+  date: string;
+  pnl: number;
+  tradeCount: number;
+  winRate: number;
+}
+
+export interface DayTradeRow {
+  symbol: string;
+  direction: string;
+  pnl: number;
+  rr: number;
+  executionQuality: string;
+}
+
+export interface DayDetail {
+  date: string;
+  pnl: number;
+  tradeCount: number;
+  winRate: number;
+  bestTrade?: DayTradeRow | null;
+  worstTrade?: DayTradeRow | null;
+  mistakes: string[];
 }
 
 export interface EquityPoint {
@@ -161,8 +193,29 @@ export interface WeeklyReview {
   bestSetup?: string | null;
   worstSetup?: string | null;
   bestSession?: string | null;
+  worstSession?: string | null;
+  bestDay?: string | null;
+  worstDay?: string | null;
+  worstHabit?: string | null;
   mostCommonMistake?: string | null;
+  recommendation?: string | null;
 }
+
+export type TimeframeParamParameter =
+  (typeof TimeframeParamParameter)[keyof typeof TimeframeParamParameter];
+
+export const TimeframeParamParameter = {
+  day: "day",
+  week: "week",
+  month: "month",
+  year: "year",
+  all: "all",
+} as const;
+
+/**
+ * Anchor date (ISO). Defaults to today.
+ */
+export type DateParamParameter = string;
 
 export type ListTradesParams = {
   setup?: SetupType;
@@ -187,3 +240,62 @@ export const ListTradesSortDir = {
   asc: "asc",
   desc: "desc",
 } as const;
+
+export type GetMetricsSummaryParams = {
+  timeframe?: TimeframeParamParameter;
+  /**
+   * Anchor date (ISO). Defaults to today.
+   */
+  date?: DateParamParameter;
+};
+
+export type GetEquityCurveParams = {
+  timeframe?: TimeframeParamParameter;
+  /**
+   * Anchor date (ISO). Defaults to today.
+   */
+  date?: DateParamParameter;
+};
+
+export type GetWinLossParams = {
+  timeframe?: TimeframeParamParameter;
+  /**
+   * Anchor date (ISO). Defaults to today.
+   */
+  date?: DateParamParameter;
+};
+
+export type GetPerformanceBySetupParams = {
+  timeframe?: TimeframeParamParameter;
+  /**
+   * Anchor date (ISO). Defaults to today.
+   */
+  date?: DateParamParameter;
+};
+
+export type GetPerformanceBySessionParams = {
+  timeframe?: TimeframeParamParameter;
+  /**
+   * Anchor date (ISO). Defaults to today.
+   */
+  date?: DateParamParameter;
+};
+
+export type GetCalendarParams = {
+  /**
+   * Any date inside the month to render (ISO YYYY-MM-DD).
+   */
+  date?: string;
+};
+
+export type GetDayDetailParams = {
+  date: string;
+};
+
+export type GetExecutionAnalysisParams = {
+  timeframe?: TimeframeParamParameter;
+  /**
+   * Anchor date (ISO). Defaults to today.
+   */
+  date?: DateParamParameter;
+};

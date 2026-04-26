@@ -2,15 +2,16 @@ import { Router, type IRouter } from "express";
 import { db, tradesTable, type Trade } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+import {
+  inRange,
+  parseAnchor,
+  parseTimeframe,
+  periodRange,
+} from "../lib/timeframe";
 
 const router: IRouter = Router();
 
-function compare(
-  groupA: string,
-  groupB: string,
-  a: Trade[],
-  b: Trade[],
-) {
+function compare(groupA: string, groupB: string, a: Trade[], b: Trade[]) {
   const winsA = a.filter((t) => t.pnl > 0).length;
   const winsB = b.filter((t) => t.pnl > 0).length;
   const pnlA = a.reduce((s, t) => s + t.pnl, 0);
@@ -28,10 +29,19 @@ function compare(
 }
 
 router.get("/analysis/execution", requireAuth, async (req, res) => {
-  const trades = await db
+  const timeframe = parseTimeframe(req.query.timeframe);
+  const anchor = parseAnchor(req.query.date);
+  const range = periodRange(timeframe, anchor);
+
+  const all = await db
     .select()
     .from(tradesTable)
     .where(eq(tradesTable.userId, req.userId!));
+
+  const trades =
+    timeframe === "all"
+      ? all
+      : all.filter((t) => inRange(t.tradedAt, range.start, range.end));
 
   const emaYes = trades.filter((t) => t.emaAlignment);
   const emaNo = trades.filter((t) => !t.emaAlignment);

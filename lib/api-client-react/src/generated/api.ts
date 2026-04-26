@@ -17,9 +17,19 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  CalendarDay,
+  DayDetail,
   DeleteResponse,
   EquityPoint,
   ExecutionAnalysis,
+  GetCalendarParams,
+  GetDayDetailParams,
+  GetEquityCurveParams,
+  GetExecutionAnalysisParams,
+  GetMetricsSummaryParams,
+  GetPerformanceBySessionParams,
+  GetPerformanceBySetupParams,
+  GetWinLossParams,
   GroupedPerformance,
   HealthStatus,
   ImportTradesPayload,
@@ -539,43 +549,62 @@ export const useDeleteTrade = <
 };
 
 /**
- * @summary Aggregate metrics across all trades
+ * @summary Aggregate metrics with previous-period comparison
  */
-export const getGetMetricsSummaryUrl = () => {
-  return `/api/metrics/summary`;
+export const getGetMetricsSummaryUrl = (params?: GetMetricsSummaryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/metrics/summary?${stringifiedParams}`
+    : `/api/metrics/summary`;
 };
 
 export const getMetricsSummary = async (
+  params?: GetMetricsSummaryParams,
   options?: RequestInit,
 ): Promise<MetricsSummary> => {
-  return customFetch<MetricsSummary>(getGetMetricsSummaryUrl(), {
+  return customFetch<MetricsSummary>(getGetMetricsSummaryUrl(params), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetMetricsSummaryQueryKey = () => {
-  return [`/api/metrics/summary`] as const;
+export const getGetMetricsSummaryQueryKey = (
+  params?: GetMetricsSummaryParams,
+) => {
+  return [`/api/metrics/summary`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetMetricsSummaryQueryOptions = <
   TData = Awaited<ReturnType<typeof getMetricsSummary>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getMetricsSummary>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetMetricsSummaryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMetricsSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMetricsSummaryQueryKey();
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMetricsSummaryQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof getMetricsSummary>>
-  > = ({ signal }) => getMetricsSummary({ signal, ...requestOptions });
+  > = ({ signal }) => getMetricsSummary(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getMetricsSummary>>,
@@ -590,21 +619,24 @@ export type GetMetricsSummaryQueryResult = NonNullable<
 export type GetMetricsSummaryQueryError = ErrorType<unknown>;
 
 /**
- * @summary Aggregate metrics across all trades
+ * @summary Aggregate metrics with previous-period comparison
  */
 
 export function useGetMetricsSummary<
   TData = Awaited<ReturnType<typeof getMetricsSummary>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getMetricsSummary>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetMetricsSummaryQueryOptions(options);
+>(
+  params?: GetMetricsSummaryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMetricsSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMetricsSummaryQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -616,41 +648,57 @@ export function useGetMetricsSummary<
 /**
  * @summary Cumulative PnL over time
  */
-export const getGetEquityCurveUrl = () => {
-  return `/api/metrics/equity-curve`;
+export const getGetEquityCurveUrl = (params?: GetEquityCurveParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/metrics/equity-curve?${stringifiedParams}`
+    : `/api/metrics/equity-curve`;
 };
 
 export const getEquityCurve = async (
+  params?: GetEquityCurveParams,
   options?: RequestInit,
 ): Promise<EquityPoint[]> => {
-  return customFetch<EquityPoint[]>(getGetEquityCurveUrl(), {
+  return customFetch<EquityPoint[]>(getGetEquityCurveUrl(params), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetEquityCurveQueryKey = () => {
-  return [`/api/metrics/equity-curve`] as const;
+export const getGetEquityCurveQueryKey = (params?: GetEquityCurveParams) => {
+  return [`/api/metrics/equity-curve`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetEquityCurveQueryOptions = <
   TData = Awaited<ReturnType<typeof getEquityCurve>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getEquityCurve>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetEquityCurveParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEquityCurve>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetEquityCurveQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetEquityCurveQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getEquityCurve>>> = ({
     signal,
-  }) => getEquityCurve({ signal, ...requestOptions });
+  }) => getEquityCurve(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getEquityCurve>>,
@@ -671,15 +719,18 @@ export type GetEquityCurveQueryError = ErrorType<unknown>;
 export function useGetEquityCurve<
   TData = Awaited<ReturnType<typeof getEquityCurve>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getEquityCurve>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetEquityCurveQueryOptions(options);
+>(
+  params?: GetEquityCurveParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEquityCurve>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetEquityCurveQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -688,39 +739,57 @@ export function useGetEquityCurve<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export const getGetWinLossUrl = () => {
-  return `/api/metrics/win-loss`;
+export const getGetWinLossUrl = (params?: GetWinLossParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/metrics/win-loss?${stringifiedParams}`
+    : `/api/metrics/win-loss`;
 };
 
-export const getWinLoss = async (options?: RequestInit): Promise<WinLoss> => {
-  return customFetch<WinLoss>(getGetWinLossUrl(), {
+export const getWinLoss = async (
+  params?: GetWinLossParams,
+  options?: RequestInit,
+): Promise<WinLoss> => {
+  return customFetch<WinLoss>(getGetWinLossUrl(params), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetWinLossQueryKey = () => {
-  return [`/api/metrics/win-loss`] as const;
+export const getGetWinLossQueryKey = (params?: GetWinLossParams) => {
+  return [`/api/metrics/win-loss`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetWinLossQueryOptions = <
   TData = Awaited<ReturnType<typeof getWinLoss>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getWinLoss>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetWinLossParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWinLoss>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetWinLossQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetWinLossQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getWinLoss>>> = ({
     signal,
-  }) => getWinLoss({ signal, ...requestOptions });
+  }) => getWinLoss(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getWinLoss>>,
@@ -737,15 +806,18 @@ export type GetWinLossQueryError = ErrorType<unknown>;
 export function useGetWinLoss<
   TData = Awaited<ReturnType<typeof getWinLoss>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getWinLoss>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetWinLossQueryOptions(options);
+>(
+  params?: GetWinLossParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWinLoss>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWinLossQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -754,41 +826,66 @@ export function useGetWinLoss<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export const getGetPerformanceBySetupUrl = () => {
-  return `/api/metrics/by-setup`;
+export const getGetPerformanceBySetupUrl = (
+  params?: GetPerformanceBySetupParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/metrics/by-setup?${stringifiedParams}`
+    : `/api/metrics/by-setup`;
 };
 
 export const getPerformanceBySetup = async (
+  params?: GetPerformanceBySetupParams,
   options?: RequestInit,
 ): Promise<GroupedPerformance[]> => {
-  return customFetch<GroupedPerformance[]>(getGetPerformanceBySetupUrl(), {
-    ...options,
-    method: "GET",
-  });
+  return customFetch<GroupedPerformance[]>(
+    getGetPerformanceBySetupUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
-export const getGetPerformanceBySetupQueryKey = () => {
-  return [`/api/metrics/by-setup`] as const;
+export const getGetPerformanceBySetupQueryKey = (
+  params?: GetPerformanceBySetupParams,
+) => {
+  return [`/api/metrics/by-setup`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetPerformanceBySetupQueryOptions = <
   TData = Awaited<ReturnType<typeof getPerformanceBySetup>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getPerformanceBySetup>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetPerformanceBySetupParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPerformanceBySetup>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetPerformanceBySetupQueryKey();
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPerformanceBySetupQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof getPerformanceBySetup>>
-  > = ({ signal }) => getPerformanceBySetup({ signal, ...requestOptions });
+  > = ({ signal }) =>
+    getPerformanceBySetup(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getPerformanceBySetup>>,
@@ -805,15 +902,18 @@ export type GetPerformanceBySetupQueryError = ErrorType<unknown>;
 export function useGetPerformanceBySetup<
   TData = Awaited<ReturnType<typeof getPerformanceBySetup>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getPerformanceBySetup>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetPerformanceBySetupQueryOptions(options);
+>(
+  params?: GetPerformanceBySetupParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPerformanceBySetup>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPerformanceBySetupQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -822,42 +922,66 @@ export function useGetPerformanceBySetup<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export const getGetPerformanceBySessionUrl = () => {
-  return `/api/metrics/by-session`;
+export const getGetPerformanceBySessionUrl = (
+  params?: GetPerformanceBySessionParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/metrics/by-session?${stringifiedParams}`
+    : `/api/metrics/by-session`;
 };
 
 export const getPerformanceBySession = async (
+  params?: GetPerformanceBySessionParams,
   options?: RequestInit,
 ): Promise<GroupedPerformance[]> => {
-  return customFetch<GroupedPerformance[]>(getGetPerformanceBySessionUrl(), {
-    ...options,
-    method: "GET",
-  });
+  return customFetch<GroupedPerformance[]>(
+    getGetPerformanceBySessionUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
-export const getGetPerformanceBySessionQueryKey = () => {
-  return [`/api/metrics/by-session`] as const;
+export const getGetPerformanceBySessionQueryKey = (
+  params?: GetPerformanceBySessionParams,
+) => {
+  return [`/api/metrics/by-session`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetPerformanceBySessionQueryOptions = <
   TData = Awaited<ReturnType<typeof getPerformanceBySession>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getPerformanceBySession>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetPerformanceBySessionParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPerformanceBySession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getGetPerformanceBySessionQueryKey();
+    queryOptions?.queryKey ?? getGetPerformanceBySessionQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof getPerformanceBySession>>
-  > = ({ signal }) => getPerformanceBySession({ signal, ...requestOptions });
+  > = ({ signal }) =>
+    getPerformanceBySession(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getPerformanceBySession>>,
@@ -874,15 +998,206 @@ export type GetPerformanceBySessionQueryError = ErrorType<unknown>;
 export function useGetPerformanceBySession<
   TData = Awaited<ReturnType<typeof getPerformanceBySession>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getPerformanceBySession>>,
+>(
+  params?: GetPerformanceBySessionParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPerformanceBySession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPerformanceBySessionQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Daily PnL aggregates for a calendar month
+ */
+export const getGetCalendarUrl = (params?: GetCalendarParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/metrics/calendar?${stringifiedParams}`
+    : `/api/metrics/calendar`;
+};
+
+export const getCalendar = async (
+  params?: GetCalendarParams,
+  options?: RequestInit,
+): Promise<CalendarDay[]> => {
+  return customFetch<CalendarDay[]>(getGetCalendarUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCalendarQueryKey = (params?: GetCalendarParams) => {
+  return [`/api/metrics/calendar`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetCalendarQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCalendar>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetCalendarParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCalendar>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCalendarQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCalendar>>> = ({
+    signal,
+  }) => getCalendar(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCalendar>>,
     TError,
     TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetPerformanceBySessionQueryOptions(options);
+  > & { queryKey: QueryKey };
+};
+
+export type GetCalendarQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCalendar>>
+>;
+export type GetCalendarQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Daily PnL aggregates for a calendar month
+ */
+
+export function useGetCalendar<
+  TData = Awaited<ReturnType<typeof getCalendar>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetCalendarParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCalendar>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCalendarQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Detailed stats for a single trading day
+ */
+export const getGetDayDetailUrl = (params: GetDayDetailParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/metrics/day?${stringifiedParams}`
+    : `/api/metrics/day`;
+};
+
+export const getDayDetail = async (
+  params: GetDayDetailParams,
+  options?: RequestInit,
+): Promise<DayDetail> => {
+  return customFetch<DayDetail>(getGetDayDetailUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDayDetailQueryKey = (params?: GetDayDetailParams) => {
+  return [`/api/metrics/day`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetDayDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDayDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetDayDetailParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getDayDetail>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDayDetailQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDayDetail>>> = ({
+    signal,
+  }) => getDayDetail(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDayDetail>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDayDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDayDetail>>
+>;
+export type GetDayDetailQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Detailed stats for a single trading day
+ */
+
+export function useGetDayDetail<
+  TData = Awaited<ReturnType<typeof getDayDetail>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetDayDetailParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getDayDetail>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDayDetailQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -894,41 +1209,63 @@ export function useGetPerformanceBySession<
 /**
  * @summary Compare EMA aligned vs not, A+ vs FOMO
  */
-export const getGetExecutionAnalysisUrl = () => {
-  return `/api/analysis/execution`;
+export const getGetExecutionAnalysisUrl = (
+  params?: GetExecutionAnalysisParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/analysis/execution?${stringifiedParams}`
+    : `/api/analysis/execution`;
 };
 
 export const getExecutionAnalysis = async (
+  params?: GetExecutionAnalysisParams,
   options?: RequestInit,
 ): Promise<ExecutionAnalysis> => {
-  return customFetch<ExecutionAnalysis>(getGetExecutionAnalysisUrl(), {
+  return customFetch<ExecutionAnalysis>(getGetExecutionAnalysisUrl(params), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetExecutionAnalysisQueryKey = () => {
-  return [`/api/analysis/execution`] as const;
+export const getGetExecutionAnalysisQueryKey = (
+  params?: GetExecutionAnalysisParams,
+) => {
+  return [`/api/analysis/execution`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetExecutionAnalysisQueryOptions = <
   TData = Awaited<ReturnType<typeof getExecutionAnalysis>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getExecutionAnalysis>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetExecutionAnalysisParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getExecutionAnalysis>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetExecutionAnalysisQueryKey();
+  const queryKey =
+    queryOptions?.queryKey ?? getGetExecutionAnalysisQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof getExecutionAnalysis>>
-  > = ({ signal }) => getExecutionAnalysis({ signal, ...requestOptions });
+  > = ({ signal }) =>
+    getExecutionAnalysis(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getExecutionAnalysis>>,
@@ -949,15 +1286,18 @@ export type GetExecutionAnalysisQueryError = ErrorType<unknown>;
 export function useGetExecutionAnalysis<
   TData = Awaited<ReturnType<typeof getExecutionAnalysis>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getExecutionAnalysis>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetExecutionAnalysisQueryOptions(options);
+>(
+  params?: GetExecutionAnalysisParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getExecutionAnalysis>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetExecutionAnalysisQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

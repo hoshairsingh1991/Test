@@ -6,12 +6,24 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./calendarDay";
+export * from "./dateParamParameter";
+export * from "./dayDetail";
+export * from "./dayTradeRow";
 export * from "./deleteResponse";
 export * from "./direction";
 export * from "./equityPoint";
 export * from "./executionAnalysis";
 export * from "./executionComparison";
 export * from "./executionQuality";
+export * from "./getCalendarParams";
+export * from "./getDayDetailParams";
+export * from "./getEquityCurveParams";
+export * from "./getExecutionAnalysisParams";
+export * from "./getMetricsSummaryParams";
+export * from "./getPerformanceBySessionParams";
+export * from "./getPerformanceBySetupParams";
+export * from "./getWinLossParams";
 export * from "./groupedPerformance";
 export * from "./healthStatus";
 export * from "./importedTrade";
@@ -21,8 +33,10 @@ export * from "./listTradesParams";
 export * from "./listTradesSortBy";
 export * from "./listTradesSortDir";
 export * from "./metricsSummary";
+export * from "./metricStats";
 export * from "./session";
 export * from "./setupType";
+export * from "./timeframeParamParameter";
 export * from "./trade";
 export * from "./tradeInput";
 export * from "./weeklyReview";

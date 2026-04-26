@@ -145,7 +145,10 @@ paths:
     get:
       operationId: getMetricsSummary
       tags: [metrics]
-      summary: Aggregate metrics across all trades
+      summary: Aggregate metrics with previous-period comparison
+      parameters:
+        - $ref: "#/components/parameters/TimeframeParam"
+        - $ref: "#/components/parameters/DateParam"
       responses:
         "200":
           description: Summary
@@ -159,6 +162,9 @@ paths:
       operationId: getEquityCurve
       tags: [metrics]
       summary: Cumulative PnL over time
+      parameters:
+        - $ref: "#/components/parameters/TimeframeParam"
+        - $ref: "#/components/parameters/DateParam"
       responses:
         "200":
           description: Curve points
@@ -173,6 +179,9 @@ paths:
     get:
       operationId: getWinLoss
       tags: [metrics]
+      parameters:
+        - $ref: "#/components/parameters/TimeframeParam"
+        - $ref: "#/components/parameters/DateParam"
       responses:
         "200":
           description: Win/Loss counts
@@ -185,6 +194,9 @@ paths:
     get:
       operationId: getPerformanceBySetup
       tags: [metrics]
+      parameters:
+        - $ref: "#/components/parameters/TimeframeParam"
+        - $ref: "#/components/parameters/DateParam"
       responses:
         "200":
           description: Performance grouped by setup
@@ -199,6 +211,9 @@ paths:
     get:
       operationId: getPerformanceBySession
       tags: [metrics]
+      parameters:
+        - $ref: "#/components/parameters/TimeframeParam"
+        - $ref: "#/components/parameters/DateParam"
       responses:
         "200":
           description: Performance grouped by session
@@ -209,11 +224,54 @@ paths:
                 items:
                   $ref: "#/components/schemas/GroupedPerformance"
 
+  /metrics/calendar:
+    get:
+      operationId: getCalendar
+      tags: [metrics]
+      summary: Daily PnL aggregates for a calendar month
+      parameters:
+        - in: query
+          name: date
+          description: Any date inside the month to render (ISO YYYY-MM-DD).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Daily aggregates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarDay"
+
+  /metrics/day:
+    get:
+      operationId: getDayDetail
+      tags: [metrics]
+      summary: Detailed stats for a single trading day
+      parameters:
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Day detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DayDetail"
+
   /analysis/execution:
     get:
       operationId: getExecutionAnalysis
       tags: [analysis]
       summary: Compare EMA aligned vs not, A+ vs FOMO
+      parameters:
+        - $ref: "#/components/parameters/TimeframeParam"
+        - $ref: "#/components/parameters/DateParam"
       responses:
         "200":
           description: Comparison metrics
@@ -236,6 +294,20 @@ paths:
                 $ref: "#/components/schemas/WeeklyReview"
 
 components:
+  parameters:
+    TimeframeParam:
+      in: query
+      name: timeframe
+      schema:
+        type: string
+        enum: [day, week, month, year, all]
+    DateParam:
+      in: query
+      name: date
+      description: Anchor date (ISO). Defaults to today.
+      schema:
+        type: string
+
   schemas:
     HealthStatus:
       type: object
@@ -417,7 +489,7 @@ components:
           type: integer
       required: [imported, skippedDuplicates]
 
-    MetricsSummary:
+    MetricStats:
       type: object
       properties:
         totalPnl:
@@ -432,6 +504,8 @@ components:
           type: number
         expectancyR:
           type: number
+        avgR:
+          type: number
         wins:
           type: integer
         losses:
@@ -445,9 +519,76 @@ components:
         - avgWin
         - avgLoss
         - expectancyR
+        - avgR
         - wins
         - losses
         - breakeven
+
+    MetricsSummary:
+      allOf:
+        - $ref: "#/components/schemas/MetricStats"
+        - type: object
+          properties:
+            previous:
+              $ref: "#/components/schemas/MetricStats"
+            periodStart:
+              type: string
+              format: date-time
+            periodEnd:
+              type: string
+              format: date-time
+          required: [previous, periodStart, periodEnd]
+
+    CalendarDay:
+      type: object
+      properties:
+        date:
+          type: string
+        pnl:
+          type: number
+        tradeCount:
+          type: integer
+        winRate:
+          type: number
+      required: [date, pnl, tradeCount, winRate]
+
+    DayTradeRow:
+      type: object
+      properties:
+        symbol:
+          type: string
+        direction:
+          type: string
+        pnl:
+          type: number
+        rr:
+          type: number
+        executionQuality:
+          type: string
+      required: [symbol, direction, pnl, rr, executionQuality]
+
+    DayDetail:
+      type: object
+      properties:
+        date:
+          type: string
+        pnl:
+          type: number
+        tradeCount:
+          type: integer
+        winRate:
+          type: number
+        bestTrade:
+          $ref: "#/components/schemas/DayTradeRow"
+          nullable: true
+        worstTrade:
+          $ref: "#/components/schemas/DayTradeRow"
+          nullable: true
+        mistakes:
+          type: array
+          items:
+            type: string
+      required: [date, pnl, tradeCount, winRate, mistakes]
 
     EquityPoint:
       type: object
@@ -537,7 +678,22 @@ components:
         bestSession:
           type: string
           nullable: true
+        worstSession:
+          type: string
+          nullable: true
+        bestDay:
+          type: string
+          nullable: true
+        worstDay:
+          type: string
+          nullable: true
+        worstHabit:
+          type: string
+          nullable: true
         mostCommonMistake:
+          type: string
+          nullable: true
+        recommendation:
           type: string
           nullable: true
       required: [weekStart, weekEnd, tradeCount, totalPnl]
