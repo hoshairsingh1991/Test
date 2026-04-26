@@ -26,5 +26,6 @@ export interface Trade {
   screenshotUrl?: string | null;
   pnl: number;
   rr: number;
+  source: string;
   createdAt: Date;
 }

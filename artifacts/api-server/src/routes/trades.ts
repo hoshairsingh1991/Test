@@ -6,6 +6,7 @@ import {
   ListTradesQueryParams,
   GetTradeParams,
   DeleteTradeParams,
+  ImportTradesBody,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth";
 import { computePnl, computeRR } from "../lib/calc";
@@ -29,6 +30,7 @@ function serializeTrade(t: typeof tradesTable.$inferSelect) {
     screenshotUrl: t.screenshotUrl,
     pnl: t.pnl,
     rr: t.rr,
+    source: t.source,
     createdAt: t.createdAt.toISOString(),
   };
 }
@@ -80,6 +82,69 @@ router.post("/trades", requireAuth, async (req, res) => {
     .returning();
 
   res.json(serializeTrade(row));
+});
+
+router.post("/trades/import", requireAuth, async (req, res) => {
+  const body = ImportTradesBody.parse(req.body);
+  const userId = req.userId!;
+
+  const existing = await db
+    .select({
+      symbol: tradesTable.symbol,
+      tradedAt: tradesTable.tradedAt,
+      entryPrice: tradesTable.entryPrice,
+      exitPrice: tradesTable.exitPrice,
+      size: tradesTable.size,
+    })
+    .from(tradesTable)
+    .where(eq(tradesTable.userId, userId));
+
+  const dupKey = (t: {
+    symbol: string;
+    tradedAt: Date | string;
+    entryPrice: number;
+    exitPrice: number;
+    size: number;
+  }) =>
+    `${t.symbol}|${new Date(t.tradedAt).toISOString()}|${t.entryPrice}|${t.exitPrice}|${t.size}`;
+
+  const seen = new Set(existing.map(dupKey));
+
+  const rowsToInsert: (typeof tradesTable.$inferInsert)[] = [];
+  let skipped = 0;
+
+  for (const t of body.trades) {
+    const key = dupKey(t);
+    if (seen.has(key)) {
+      skipped += 1;
+      continue;
+    }
+    seen.add(key);
+    rowsToInsert.push({
+      userId,
+      symbol: t.symbol,
+      entryPrice: t.entryPrice,
+      exitPrice: t.exitPrice,
+      size: t.size,
+      direction: t.direction,
+      tradedAt: new Date(t.tradedAt),
+      setupType: "Pullback",
+      session: "NY",
+      emaAlignment: false,
+      executionQuality: "B",
+      notes: null,
+      screenshotUrl: null,
+      pnl: computePnl(t.direction, t.entryPrice, t.exitPrice, t.size),
+      rr: computeRR(t.direction, t.entryPrice, t.exitPrice),
+      source: "csv",
+    });
+  }
+
+  if (rowsToInsert.length > 0) {
+    await db.insert(tradesTable).values(rowsToInsert);
+  }
+
+  res.json({ imported: rowsToInsert.length, skippedDuplicates: skipped });
 });
 
 router.get("/trades/:id", requireAuth, async (req, res) => {

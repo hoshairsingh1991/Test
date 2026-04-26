@@ -61,6 +61,7 @@ export interface Trade {
   screenshotUrl?: string | null;
   pnl: number;
   rr: number;
+  source: string;
   createdAt: string;
 }
 
@@ -81,6 +82,28 @@ export interface TradeInput {
   executionQuality: ExecutionQuality;
   notes?: string | null;
   screenshotUrl?: string | null;
+}
+
+export interface ImportedTrade {
+  /** @minLength 1 */
+  symbol: string;
+  /** @exclusiveMinimum 0 */
+  entryPrice: number;
+  /** @exclusiveMinimum 0 */
+  exitPrice: number;
+  /** @exclusiveMinimum 0 */
+  size: number;
+  direction: Direction;
+  tradedAt: string;
+}
+
+export interface ImportTradesPayload {
+  trades: ImportedTrade[];
+}
+
+export interface ImportTradesResult {
+  imported: number;
+  skippedDuplicates: number;
 }
 
 export interface MetricsSummary {

@@ -22,6 +22,8 @@ import type {
   ExecutionAnalysis,
   GroupedPerformance,
   HealthStatus,
+  ImportTradesPayload,
+  ImportTradesResult,
   ListTradesParams,
   MetricsSummary,
   Trade,
@@ -292,6 +294,92 @@ export const useCreateTrade = <
   TContext
 > => {
   return useMutation(getCreateTradeMutationOptions(options));
+};
+
+/**
+ * @summary Bulk import trades (e.g. from CSV)
+ */
+export const getImportTradesUrl = () => {
+  return `/api/trades/import`;
+};
+
+export const importTrades = async (
+  importTradesPayload: ImportTradesPayload,
+  options?: RequestInit,
+): Promise<ImportTradesResult> => {
+  return customFetch<ImportTradesResult>(getImportTradesUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(importTradesPayload),
+  });
+};
+
+export const getImportTradesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof importTrades>>,
+    TError,
+    { data: BodyType<ImportTradesPayload> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof importTrades>>,
+  TError,
+  { data: BodyType<ImportTradesPayload> },
+  TContext
+> => {
+  const mutationKey = ["importTrades"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof importTrades>>,
+    { data: BodyType<ImportTradesPayload> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return importTrades(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ImportTradesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof importTrades>>
+>;
+export type ImportTradesMutationBody = BodyType<ImportTradesPayload>;
+export type ImportTradesMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Bulk import trades (e.g. from CSV)
+ */
+export const useImportTrades = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof importTrades>>,
+    TError,
+    { data: BodyType<ImportTradesPayload> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof importTrades>>,
+  TError,
+  { data: BodyType<ImportTradesPayload> },
+  TContext
+> => {
+  return useMutation(getImportTradesMutationOptions(options));
 };
 
 export const getGetTradeUrl = (id: string) => {

@@ -37,10 +37,12 @@ A focused trading journal web app. Users sign in, log every trade with rich meta
 - execution_quality (A+/B/FOMO)
 - notes, screenshot_url
 - pnl, rr (auto-calculated server-side)
+- source ("manual" or "csv")
 
 ## API surface
 
 - `GET/POST /api/trades`, `GET/DELETE /api/trades/:id`
+- `POST /api/trades/import` — bulk import (CSV); skips duplicates, sets `source = "csv"`
 - `GET /api/metrics/summary` — total PnL, win rate, avg win/loss, expectancy
 - `GET /api/metrics/equity-curve` — cumulative PnL over time
 - `GET /api/metrics/win-loss` — wins/losses/breakeven counts

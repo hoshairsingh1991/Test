@@ -27,6 +27,7 @@ export const tradesTable = pgTable(
     screenshotUrl: text("screenshot_url"),
     pnl: doublePrecision("pnl").notNull(),
     rr: doublePrecision("rr").notNull(),
+    source: text("source").notNull().default("manual"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

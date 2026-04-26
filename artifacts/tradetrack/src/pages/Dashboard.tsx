@@ -2,12 +2,15 @@ import { useGetMetricsSummary, useGetEquityCurve, useGetWinLoss, useGetPerforman
 import { AppShell } from "@/components/layout/AppShell";
 import { StatCard } from "@/components/ui/stat-card";
 import { formatCurrency, formatPercent, cnPnl } from "@/lib/format";
-import { Activity, DollarSign, Percent, TrendingUp, ArrowDownToLine, ArrowUpToLine, Target } from "lucide-react";
+import { Activity, DollarSign, Percent, TrendingUp, ArrowDownToLine, ArrowUpToLine, Target, Upload } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { useState } from "react";
+import { ImportTradesDialog } from "@/components/ImportTradesDialog";
 
 export default function Dashboard() {
+  const [importOpen, setImportOpen] = useState(false);
   const { data: metrics, isLoading: metricsLoading } = useGetMetricsSummary();
   const { data: equity, isLoading: equityLoading } = useGetEquityCurve();
   const { data: winLoss, isLoading: winLossLoading } = useGetWinLoss();
@@ -37,10 +40,22 @@ export default function Dashboard() {
           <p className="text-muted-foreground max-w-md mb-6">
             Start logging your trades to see your performance metrics, equity curve, and actionable insights.
           </p>
-          <Link href="/trades/new">
-            <Button size="lg">Log Your First Trade</Button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/trades/new">
+              <Button size="lg">Log Your First Trade</Button>
+            </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setImportOpen(true)}
+              data-testid="button-import-trades-empty"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Import CSV
+            </Button>
+          </div>
         </div>
+        <ImportTradesDialog open={importOpen} onOpenChange={setImportOpen} />
       </AppShell>
     );
   }
@@ -56,9 +71,19 @@ export default function Dashboard() {
       <div className="space-y-8 animate-in fade-in duration-500">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <Link href="/trades/new">
-            <Button>New Trade</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setImportOpen(true)}
+              data-testid="button-import-trades"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Import Trades
+            </Button>
+            <Link href="/trades/new">
+              <Button data-testid="button-new-trade">New Trade</Button>
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -232,6 +257,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      <ImportTradesDialog open={importOpen} onOpenChange={setImportOpen} />
     </AppShell>
   );
 }

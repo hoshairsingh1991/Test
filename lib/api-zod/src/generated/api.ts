@@ -41,6 +41,7 @@ export const ListTradesResponseItem = zod.object({
   screenshotUrl: zod.string().nullish(),
   pnl: zod.number(),
   rr: zod.number(),
+  source: zod.string(),
   createdAt: zod.coerce.date(),
 });
 export const ListTradesResponse = zod.array(ListTradesResponseItem);
@@ -86,7 +87,40 @@ export const CreateTradeResponse = zod.object({
   screenshotUrl: zod.string().nullish(),
   pnl: zod.number(),
   rr: zod.number(),
+  source: zod.string(),
   createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Bulk import trades (e.g. from CSV)
+ */
+
+export const importTradesBodyTradesItemEntryPriceExclusiveMin = 0;
+
+export const importTradesBodyTradesItemExitPriceExclusiveMin = 0;
+
+export const importTradesBodyTradesItemSizeExclusiveMin = 0;
+
+export const ImportTradesBody = zod.object({
+  trades: zod.array(
+    zod.object({
+      symbol: zod.string().min(1),
+      entryPrice: zod
+        .number()
+        .gt(importTradesBodyTradesItemEntryPriceExclusiveMin),
+      exitPrice: zod
+        .number()
+        .gt(importTradesBodyTradesItemExitPriceExclusiveMin),
+      size: zod.number().gt(importTradesBodyTradesItemSizeExclusiveMin),
+      direction: zod.enum(["Long", "Short"]),
+      tradedAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+export const ImportTradesResponse = zod.object({
+  imported: zod.number(),
+  skippedDuplicates: zod.number(),
 });
 
 export const GetTradeParams = zod.object({
@@ -109,6 +143,7 @@ export const GetTradeResponse = zod.object({
   screenshotUrl: zod.string().nullish(),
   pnl: zod.number(),
   rr: zod.number(),
+  source: zod.string(),
   createdAt: zod.coerce.date(),
 });
 
