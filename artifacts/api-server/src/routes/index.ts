@@ -1,16 +1,10 @@
-import { Router, type IRouter } from "express";
-import healthRouter from "./health";
-import tradesRouter from "./trades";
-import metricsRouter from "./metrics";
-import analysisRouter from "./analysis";
-import reviewRouter from "./review";
+import { Router } from "express";
 
-const router: IRouter = Router();
+const router = Router();
 
-router.use(healthRouter);
-router.use(tradesRouter);
-router.use(metricsRouter);
-router.use(analysisRouter);
-router.use(reviewRouter);
+// Only working route
+router.get("/healthz", (_req: any, res: any) => {
+  res.json({ status: "ok" });
+});
 
 export default router;
