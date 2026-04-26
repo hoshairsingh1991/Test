@@ -1,5 +1,7 @@
 {
   "name": "vercel-api",
   "private": true,
-  "dependencies": {}
+  "scripts": {
+    "start": "node index.js"
+  }
 }
