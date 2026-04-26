@@ -1,7 +1,5 @@
 {
   "name": "vercel-api",
   "private": true,
-  "scripts": {
-    "build": "echo 'no build needed'"
-  }
+  "dependencies": {}
 }
