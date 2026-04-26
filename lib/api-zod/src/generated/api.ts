@@ -147,6 +147,57 @@ export const GetTradeResponse = zod.object({
   createdAt: zod.coerce.date(),
 });
 
+/**
+ * @summary Update an existing trade (recomputes PnL and R)
+ */
+export const UpdateTradeParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const updateTradeBodyEntryPriceExclusiveMin = 0;
+
+export const updateTradeBodyExitPriceExclusiveMin = 0;
+
+export const updateTradeBodySizeExclusiveMin = 0;
+
+export const UpdateTradeBody = zod.object({
+  symbol: zod.string().min(1).optional(),
+  entryPrice: zod.number().gt(updateTradeBodyEntryPriceExclusiveMin).optional(),
+  exitPrice: zod.number().gt(updateTradeBodyExitPriceExclusiveMin).optional(),
+  size: zod.number().gt(updateTradeBodySizeExclusiveMin).optional(),
+  direction: zod.enum(["Long", "Short"]).optional(),
+  tradedAt: zod.coerce.date().optional(),
+  setupType: zod.enum(["Pullback", "Breakout", "Reversal"]).optional(),
+  session: zod.enum(["London", "NY", "Asia"]).optional(),
+  emaAlignment: zod.boolean().optional(),
+  executionQuality: zod.enum(["A+", "B", "FOMO"]).optional(),
+  notes: zod.string().nullish(),
+  screenshotUrl: zod.string().nullish(),
+});
+
+export const UpdateTradeResponse = zod.object({
+  id: zod.string(),
+  symbol: zod.string(),
+  entryPrice: zod.number(),
+  exitPrice: zod.number(),
+  size: zod.number(),
+  direction: zod.enum(["Long", "Short"]),
+  tradedAt: zod.coerce.date(),
+  setupType: zod.enum(["Pullback", "Breakout", "Reversal"]),
+  session: zod.enum(["London", "NY", "Asia"]),
+  emaAlignment: zod.boolean(),
+  executionQuality: zod.enum(["A+", "B", "FOMO"]),
+  notes: zod.string().nullish(),
+  screenshotUrl: zod.string().nullish(),
+  pnl: zod.number(),
+  rr: zod.number(),
+  source: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Soft-delete a trade (marks as deleted, excludes from analytics)
+ */
 export const DeleteTradeParams = zod.object({
   id: zod.coerce.string(),
 });

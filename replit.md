@@ -41,7 +41,9 @@ A focused trading journal web app. Users sign in, log every trade with rich meta
 
 ## API surface
 
-- `GET/POST /api/trades`, `GET/DELETE /api/trades/:id`
+- `GET/POST /api/trades`, `GET/PATCH/DELETE /api/trades/:id`
+  - `DELETE` is a soft delete (sets `is_deleted = true`); soft-deleted trades are hidden from list, metrics, analysis, calendar, day, weekly review, and CSV duplicate check
+  - `PATCH` updates any subset of fields and re-derives `pnl` and `rr` server-side
 - `POST /api/trades/import` — bulk import (CSV); skips duplicates, sets `source = "csv"`
 - All metrics endpoints accept `?timeframe=day|week|month|year|all&date=ISO`
 - `GET /api/metrics/summary` — current period stats + previous-period comparison

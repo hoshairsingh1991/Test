@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { useListTrades, useDeleteTrade, getListTradesQueryKey, getGetMetricsSummaryQueryKey, getGetEquityCurveQueryKey, getGetWinLossQueryKey, getGetPerformanceBySetupQueryKey, getGetPerformanceBySessionQueryKey, getGetExecutionAnalysisQueryKey, getGetWeeklyReviewQueryKey } from "@workspace/api-client-react";
-import type { SetupType, Session, ExecutionQuality, ListTradesSortBy, ListTradesSortDir } from "@workspace/api-client-react";
+import { useListTrades, useDeleteTrade, getListTradesQueryKey, getGetMetricsSummaryQueryKey, getGetEquityCurveQueryKey, getGetWinLossQueryKey, getGetPerformanceBySetupQueryKey, getGetPerformanceBySessionQueryKey, getGetExecutionAnalysisQueryKey, getGetWeeklyReviewQueryKey, getGetCalendarQueryKey, getGetDayDetailQueryKey } from "@workspace/api-client-react";
+import type { SetupType, Session, ExecutionQuality, ListTradesSortBy, ListTradesSortDir, Trade } from "@workspace/api-client-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { TagPill } from "@/components/ui/tag-pill";
-import { formatCurrency, formatPercent, cnPnl } from "@/lib/format";
-import { Activity, ArrowDown, ArrowUp, ArrowUpDown, Target, Trash2 } from "lucide-react";
+import { formatCurrency, cnPnl } from "@/lib/format";
+import { Activity, ArrowDown, ArrowUp, ArrowUpDown, Pencil, Target, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { EditTradeDialog } from "@/components/EditTradeDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +30,7 @@ export default function Trades() {
   const [execution, setExecution] = useState<ExecutionQuality | undefined>();
   const [sortBy, setSortBy] = useState<ListTradesSortBy>("date");
   const [sortDir, setSortDir] = useState<ListTradesSortDir>("desc");
+  const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
 
   const { data: trades, isLoading } = useListTrades({ setup, session, execution, sortBy, sortDir });
   const queryClient = useQueryClient();
@@ -37,7 +39,10 @@ export default function Trades() {
   const deleteTrade = useDeleteTrade({
     mutation: {
       onSuccess: () => {
-        toast({ title: "Trade deleted" });
+        toast({
+          title: "Trade deleted",
+          description: "Removed from analytics. Data is preserved for audit.",
+        });
         queryClient.invalidateQueries({ queryKey: getListTradesQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetMetricsSummaryQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetEquityCurveQueryKey() });
@@ -46,6 +51,8 @@ export default function Trades() {
         queryClient.invalidateQueries({ queryKey: getGetPerformanceBySessionQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetExecutionAnalysisQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetWeeklyReviewQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetCalendarQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetDayDetailQueryKey() });
       },
       onError: () => {
         toast({ title: "Failed to delete trade", variant: "destructive" });
@@ -165,7 +172,7 @@ export default function Trades() {
                     <TableHead className="cursor-pointer" onClick={() => toggleSort("pnl")}>
                       <div className="flex items-center justify-end">PnL <SortIcon col="pnl" /></div>
                     </TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[100px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -204,31 +211,51 @@ export default function Trades() {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Trade</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete this {trade.symbol} {trade.direction} trade? This cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => deleteTrade.mutate({ id: trade.id })}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => setEditingTrade(trade)}
+                            data-testid={`button-edit-${trade.id}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                data-testid={`button-delete-${trade.id}`}
                               >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Trade</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this trade?
+                                  This {trade.symbol} {trade.direction} trade will be removed
+                                  from your dashboard, charts and analytics. The record is
+                                  archived (soft-deleted), not erased.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteTrade.mutate({ id: trade.id })}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  data-testid={`button-confirm-delete-${trade.id}`}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -238,6 +265,12 @@ export default function Trades() {
           )}
         </div>
       </div>
+
+      <EditTradeDialog
+        trade={editingTrade}
+        open={!!editingTrade}
+        onOpenChange={(open) => !open && setEditingTrade(null)}
+      />
     </AppShell>
   );
 }

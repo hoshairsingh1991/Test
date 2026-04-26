@@ -39,5 +39,6 @@ export * from "./setupType";
 export * from "./timeframeParamParameter";
 export * from "./trade";
 export * from "./tradeInput";
+export * from "./updateTradeInput";
 export * from "./weeklyReview";
 export * from "./winLoss";

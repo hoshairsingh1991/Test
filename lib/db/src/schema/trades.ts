@@ -28,6 +28,7 @@ export const tradesTable = pgTable(
     pnl: doublePrecision("pnl").notNull(),
     rr: doublePrecision("rr").notNull(),
     source: text("source").notNull().default("manual"),
+    isDeleted: boolean("is_deleted").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

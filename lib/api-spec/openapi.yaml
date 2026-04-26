@@ -124,9 +124,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Trade"
+    patch:
+      operationId: updateTrade
+      tags: [trades]
+      summary: Update an existing trade (recomputes PnL and R)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTradeInput"
+      responses:
+        "200":
+          description: Updated trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
     delete:
       operationId: deleteTrade
       tags: [trades]
+      summary: Soft-delete a trade (marks as deleted, excludes from analytics)
       parameters:
         - in: path
           name: id
@@ -442,6 +466,41 @@ components:
         - session
         - emaAlignment
         - executionQuality
+
+    UpdateTradeInput:
+      type: object
+      properties:
+        symbol:
+          type: string
+          minLength: 1
+        entryPrice:
+          type: number
+          exclusiveMinimum: 0
+        exitPrice:
+          type: number
+          exclusiveMinimum: 0
+        size:
+          type: number
+          exclusiveMinimum: 0
+        direction:
+          $ref: "#/components/schemas/Direction"
+        tradedAt:
+          type: string
+          format: date-time
+        setupType:
+          $ref: "#/components/schemas/SetupType"
+        session:
+          $ref: "#/components/schemas/Session"
+        emaAlignment:
+          type: boolean
+        executionQuality:
+          $ref: "#/components/schemas/ExecutionQuality"
+        notes:
+          type: string
+          nullable: true
+        screenshotUrl:
+          type: string
+          nullable: true
 
     ImportedTrade:
       type: object

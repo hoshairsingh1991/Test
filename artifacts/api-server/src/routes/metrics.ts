@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, tradesTable, type Trade } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import {
   inRange,
@@ -12,7 +12,12 @@ import {
 const router: IRouter = Router();
 
 async function loadUserTrades(userId: string): Promise<Trade[]> {
-  return db.select().from(tradesTable).where(eq(tradesTable.userId, userId));
+  return db
+    .select()
+    .from(tradesTable)
+    .where(
+      and(eq(tradesTable.userId, userId), eq(tradesTable.isDeleted, false)),
+    );
 }
 
 function summarize(trades: Trade[]) {

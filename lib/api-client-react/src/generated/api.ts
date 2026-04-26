@@ -38,6 +38,7 @@ import type {
   MetricsSummary,
   Trade,
   TradeInput,
+  UpdateTradeInput,
   WeeklyReview,
   WinLoss,
 } from "./api.schemas";
@@ -470,6 +471,96 @@ export function useGetTrade<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Update an existing trade (recomputes PnL and R)
+ */
+export const getUpdateTradeUrl = (id: string) => {
+  return `/api/trades/${id}`;
+};
+
+export const updateTrade = async (
+  id: string,
+  updateTradeInput: UpdateTradeInput,
+  options?: RequestInit,
+): Promise<Trade> => {
+  return customFetch<Trade>(getUpdateTradeUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateTradeInput),
+  });
+};
+
+export const getUpdateTradeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateTrade>>,
+    TError,
+    { id: string; data: BodyType<UpdateTradeInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateTrade>>,
+  TError,
+  { id: string; data: BodyType<UpdateTradeInput> },
+  TContext
+> => {
+  const mutationKey = ["updateTrade"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateTrade>>,
+    { id: string; data: BodyType<UpdateTradeInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateTrade(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateTradeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateTrade>>
+>;
+export type UpdateTradeMutationBody = BodyType<UpdateTradeInput>;
+export type UpdateTradeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update an existing trade (recomputes PnL and R)
+ */
+export const useUpdateTrade = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateTrade>>,
+    TError,
+    { id: string; data: BodyType<UpdateTradeInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateTrade>>,
+  TError,
+  { id: string; data: BodyType<UpdateTradeInput> },
+  TContext
+> => {
+  return useMutation(getUpdateTradeMutationOptions(options));
+};
+
+/**
+ * @summary Soft-delete a trade (marks as deleted, excludes from analytics)
+ */
 export const getDeleteTradeUrl = (id: string) => {
   return `/api/trades/${id}`;
 };
@@ -528,6 +619,9 @@ export type DeleteTradeMutationResult = NonNullable<
 
 export type DeleteTradeMutationError = ErrorType<unknown>;
 
+/**
+ * @summary Soft-delete a trade (marks as deleted, excludes from analytics)
+ */
 export const useDeleteTrade = <
   TError = ErrorType<unknown>,
   TContext = unknown,

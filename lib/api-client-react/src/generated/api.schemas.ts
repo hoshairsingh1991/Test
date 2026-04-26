@@ -84,6 +84,25 @@ export interface TradeInput {
   screenshotUrl?: string | null;
 }
 
+export interface UpdateTradeInput {
+  /** @minLength 1 */
+  symbol?: string;
+  /** @exclusiveMinimum 0 */
+  entryPrice?: number;
+  /** @exclusiveMinimum 0 */
+  exitPrice?: number;
+  /** @exclusiveMinimum 0 */
+  size?: number;
+  direction?: Direction;
+  tradedAt?: string;
+  setupType?: SetupType;
+  session?: Session;
+  emaAlignment?: boolean;
+  executionQuality?: ExecutionQuality;
+  notes?: string | null;
+  screenshotUrl?: string | null;
+}
+
 export interface ImportedTrade {
   /** @minLength 1 */
   symbol: string;

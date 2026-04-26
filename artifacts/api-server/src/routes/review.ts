@@ -102,6 +102,7 @@ router.get("/review/weekly", requireAuth, async (req, res) => {
     .where(
       and(
         eq(tradesTable.userId, req.userId!),
+        eq(tradesTable.isDeleted, false),
         gte(tradesTable.tradedAt, weekStart),
         lte(tradesTable.tradedAt, weekEnd),
       ),

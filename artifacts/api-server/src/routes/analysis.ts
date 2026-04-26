@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, tradesTable, type Trade } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import {
   inRange,
@@ -36,7 +36,9 @@ router.get("/analysis/execution", requireAuth, async (req, res) => {
   const all = await db
     .select()
     .from(tradesTable)
-    .where(eq(tradesTable.userId, req.userId!));
+    .where(
+      and(eq(tradesTable.userId, req.userId!), eq(tradesTable.isDeleted, false)),
+    );
 
   const trades =
     timeframe === "all"
