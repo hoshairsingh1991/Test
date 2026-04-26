@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
-import pinoHttp from "pino-http";
+// @ts-ignore
+const pinoHttp = require("pino-http");
 import { clerkMiddleware } from "@clerk/express";
 import {
   CLERK_PROXY_PATH,
@@ -9,12 +10,10 @@ import {
 import router from "./routes";
 import { logger } from "./lib/logger";
 
-const pino = pinoHttp as unknown as any;
-
 const app: Express = express();
 
 app.use(
-  pino({
+  pinoHttp({
     logger,
     serializers: {
       req(req: any) {
@@ -44,4 +43,3 @@ app.use(clerkMiddleware());
 app.use("/api", router);
 
 export default app;
-
