@@ -25,6 +25,10 @@ timeoutMs = 20000
 VITE_CLERK_PUBLISHABLE_KEY = "pk_test_ZW1pbmVudC1nbmF0LTU3LmNsZXJrLmFjY291bnRzLmRldiQ"
 
 [[ports]]
+localPort = 3000
+externalPort = 3000
+
+[[ports]]
 localPort = 8000
 externalPort = 8000
 
@@ -41,4 +45,4 @@ localPort = 19746
 externalPort = 80
 
 [nix]
-packages = ["fltk", "nano"]
+packages = ["fltk", "nano", "csslint"]
